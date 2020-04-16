@@ -82,7 +82,7 @@ def init():
     print ("Settings: %s" % (file_name))
     print ("---------------------------------------")
 
-    env = carenv.CarEnv()
+    env = carenv.CarEnv("./images/MASK1.png")
     max_episode_steps = env._max_episode_steps
     torch.manual_seed(seed)
     np.random.seed(seed)

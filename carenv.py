@@ -11,8 +11,8 @@ from kivy.vector import Vector
 import imgutils
 
 class CarEnv(object):
-    def __init__(self):
-        self.pil_img = Image.open("images/MASK1.png").convert('L')
+    def __init__(self, image_file):
+        self.pil_img = Image.open(image_file).convert('L')
         self.sand = np.asarray(self.pil_img)/255
         self.sand = self.sand.astype(int)
         self.max_y, self.max_x = self.sand.shape
