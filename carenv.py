@@ -117,16 +117,16 @@ class CarEnv(object):
         
         crop_img = imgutils.center_crop_img(self.pil_img, self.pos.x, self.pos.y, self.crop_size*3)
         if ax is not None:
-          show_img(ax[1], crop_img, "large crop")
+          imgutils.show_img(ax[1], crop_img, "large crop")
 
         r_img = imgutils.rotate_img(crop_img, -self.angle)
         if ax is not None:
-          show_img(ax[2], r_img, "rotated crop")
+          imgutils.show_img(ax[2], r_img, "rotated crop")
 
         r_img_x, r_img_y = r_img.size
         crop_img = imgutils.center_crop_img(r_img, int(r_img_x/2), int(r_img_y/2), self.crop_size)
         if ax is not None:
-          show_img(ax[3], crop_img, "final crop")
+          imgutils.show_img(ax[3], crop_img, "final crop")
 
         np_img = np.asarray(crop_img)/255
         np_img = np_img.astype(int)
