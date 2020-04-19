@@ -23,10 +23,12 @@ Simple auto driving car using T3D Reinforcement learning
 * If x,y position is on sand, we set a small velocity, else a slightly high velocity
 * Our state here corresponds to the cropped portion of current postion as center. This image is rotated to be in the direction of car. This was our network understands car's orientation
 * Cropping here is done differently. If we directly crop and rotate the image, we may loose information from the edges. Hence we do the following:
+  ![ImageCropProccess](images/imagecropping.png)
   * Crop a larger portion of image
   * Rotate it to make the cropped image in the direction of car's orientation
   * Then crop it to required size
-  ![ImageCropProccess](images/imagecropping.png)
+* Following is a comparison of cropped image and original image
+  ![ImageComparison](images/envcomparison.png)
 
 # Image handling between PIL vs Numpy vs Kivy
 * One of the most frustrating part of image handling here is between different frameworks
