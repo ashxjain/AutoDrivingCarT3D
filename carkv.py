@@ -103,6 +103,11 @@ class Car(Widget):
     velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
 
+    def init_state(self, new_pos, rotation):
+        self.pos = new_pos
+        self.rotation = rotation 
+        self.angle = self.rotation
+
     def move(self, rotation):
         self.pos = Vector(*self.velocity) + self.pos
         self.rotation = rotation
@@ -121,18 +126,31 @@ class Game(Widget):
     def update(self, dt):
         global longueur
         global largeur
-        global env, policy
+        global first_update, env, policy, sand
         longueur = self.width
         largeur = self.height
         if first_update:
             init()
+            self.car.init_state(env.pos, env.angle)
         else:
-            env.pos.x, env.pos.y = int(self.car.pos[0]), int(self.car.pos[1])
+            env.pos.x, env.pos.y = int(self.car.pos[0]), largeur - int(self.car.pos[1])
             env.angle = int(self.car.angle)
         obs = env.get_state()
         action = policy.select_action(obs)
-        self.car.move(int(action[1]))
-        self.car.velocity = Vector(int(action[0]), 0).rotate(self.car.angle)
+        self.car.move(int(action[0]))
+        if sand[int(env.pos.x),int(env.pos.y)] > 0:
+            self.velocity = Vector(0.5, 0).rotate(env.angle)
+        else:
+            self.velocity = Vector(2, 0).rotate(env.angle)
+        if self.car.x < 20:
+            self.car.x = 20
+        if self.car.x > longueur - 20:
+            self.car.x = longueur - 20
+        if self.car.y < 20:
+            self.car.y = 20
+        if self.car.y > largeur - 20:
+            self.car.y = largeur - 20
+
 
 # Adding the painting tools
 
