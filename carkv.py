@@ -13,7 +13,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.graphics import Color, Ellipse, Line
 from kivy.config import Config
-from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
+from kivy.properties import BoundedNumericProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 from kivy.vector import Vector
 from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
@@ -71,7 +71,7 @@ first_update = True
 def init():
     global longueur,largeur, sand, first_update, policy, env
     sand = np.zeros((longueur,largeur))
-    img = PILImage.open("./images/mask.png").convert('L')
+    img = PILImage.open("./images/MASK1.png").convert('L')
     sand = np.asarray(img)/255
     first_update = False
 
@@ -85,33 +85,36 @@ def init():
     env = carenv.CarEnv("./images/MASK1.png")
     max_episode_steps = env._max_episode_steps
     torch.manual_seed(seed)
-    np.random.seed(seed)
     state_dim = env.state_dim
     action_dim = env.action_dim[0]
     max_action = env.max_action
     policy = t3d.T3D(state_dim, action_dim, max_action)
     policy.load(file_name, './pytorch_models/')
-    env.reset()
+    env.pos.x = 837
+    env.pos.y = 167
+    env.angle = -58 
 
 # Creating the car class
 
 class Car(Widget):
     
-    angle = NumericProperty(0)
-    rotation = NumericProperty(0)
+    angle = BoundedNumericProperty(0)
     velocity_x = NumericProperty(0)
     velocity_y = NumericProperty(0)
     velocity = ReferenceListProperty(velocity_x, velocity_y)
 
     def init_state(self, new_pos, rotation):
-        self.pos = new_pos
-        self.rotation = rotation 
-        self.angle = self.rotation
+        self.pos = Vector(new_pos.x, largeur - new_pos.y)
+        self.angle = rotation
 
     def move(self, rotation):
-        self.pos = Vector(*self.velocity) + self.pos
-        self.rotation = rotation
-        self.angle = self.angle + self.rotation
+        global sand
+        self.angle += rotation
+        if sand[int(largeur - self.pos[1]),int(self.pos[0])] > 0:
+            new_vel = Vector(0.5, 0).rotate(self.angle)
+        else:
+            new_vel = Vector(2, 0).rotate(self.angle)
+        self.pos = Vector(*new_vel) + self.pos
         
 # Creating the game class
 
@@ -121,7 +124,7 @@ class Game(Widget):
 
     def serve_car(self):
         self.car.center = self.center
-        self.car.velocity = Vector(6, 0)
+        self.car.velocity = Vector(2, 0)
 
     def update(self, dt):
         global longueur
@@ -132,24 +135,20 @@ class Game(Widget):
         if first_update:
             init()
             self.car.init_state(env.pos, env.angle)
-        else:
-            env.pos.x, env.pos.y = int(self.car.pos[0]), largeur - int(self.car.pos[1])
-            env.angle = int(self.car.angle)
         obs = env.get_state()
         action = policy.select_action(obs)
-        self.car.move(int(action[0]))
-        if sand[int(env.pos.x),int(env.pos.y)] > 0:
-            self.velocity = Vector(0.5, 0).rotate(env.angle)
-        else:
-            self.velocity = Vector(2, 0).rotate(env.angle)
-        if self.car.x < 20:
-            self.car.x = 20
-        if self.car.x > longueur - 20:
-            self.car.x = longueur - 20
-        if self.car.y < 20:
-            self.car.y = 20
-        if self.car.y > largeur - 20:
-            self.car.y = largeur - 20
+        env.angle += action[0]
+        self.car.move(action[0])
+        if self.car.x < 5:
+            self.car.x = 5
+        if self.car.x > longueur - 5:
+            self.car.x = longueur - 5
+        if self.car.y < 5:
+            self.car.y = 5
+        if self.car.y > largeur - 5:
+            self.car.y = largeur - 5
+        env.pos.x, env.pos.y = int(self.car.pos[0]), largeur - int(self.car.pos[1])
+        env.angle = self.car.angle
 
 
 # Adding the painting tools
@@ -181,7 +180,6 @@ class MyPaintWidget(Widget):
             density = n_points/(length)
             touch.ud['line'].width = int(20 * density + 1)
             sand[int(touch.x) - 10 : int(touch.x) + 10, int(touch.y) - 10 : int(touch.y) + 10] = 1
-
             
             last_x = x
             last_y = y
@@ -195,16 +193,21 @@ class CarApp(App):
         parent.serve_car()
         Clock.schedule_interval(parent.update, 1.0/60.0)
         self.painter = MyPaintWidget()
+        '''
         clearbtn = Button(text = 'clear')
         savebtn = Button(text = 'save', pos = (parent.width, 0))
         loadbtn = Button(text = 'load', pos = (2 * parent.width, 0))
         clearbtn.bind(on_release = self.clear_canvas)
         savebtn.bind(on_release = self.save)
         loadbtn.bind(on_release = self.load)
+        clearbtn = Button(text = 'clear')
+        '''
         parent.add_widget(self.painter)
+        '''
         parent.add_widget(clearbtn)
         parent.add_widget(savebtn)
         parent.add_widget(loadbtn)
+        '''
         return parent
 
     def clear_canvas(self, obj):
